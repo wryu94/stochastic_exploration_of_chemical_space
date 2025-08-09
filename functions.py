@@ -23,8 +23,8 @@ from rdkit.ML.Cluster import Butina
 # Suppress RDKit warnings and errors
 RDLogger.DisableLog('rdApp.*')
 
-def mol_perturbation_save_molecule_w_constraint(
-    smiles,            # smiles of the starting structure
+def propagate_chemical_space_trajectory(
+    starting_smiles,            # smiles of the starting structure
     iteration,         # how many times to do the perturbation for, including the first structure
     SA_score_threshold # only get structures with SA score lower than the threshold 
 ):
@@ -43,7 +43,7 @@ def mol_perturbation_save_molecule_w_constraint(
         return sascorer.calculateScore(molecule) < SA_score_threshold
     
     # Molecule array
-    molecule = Chem.MolFromSmiles(smiles, sanitize=True)
+    molecule = Chem.MolFromSmiles(starting_smiles, sanitize=True)
     mol_array = [Chem.Mol(molecule)]
 
     # Set constraint to only get 'sensible' structures
@@ -84,7 +84,7 @@ def mol_perturbation_save_molecule_w_constraint(
 
     return np.array(mol_array)
 
-def mol_movie(mols, outfile, fps=1):
+def make_gif_from_trajectory(mols, outfile, fps=1):
     """
     Create an animated GIF from a list of RDKit Mol objects,
     aligning each to the previous one based on their common substructure.
