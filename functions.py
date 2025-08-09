@@ -16,6 +16,10 @@ from tqdm import tqdm
 
 import sascorer
 
+from rdkit.Chem import rdFingerprintGenerator
+from rdkit import DataStructs
+from rdkit.ML.Cluster import Butina
+
 # Suppress RDKit warnings and errors
 RDLogger.DisableLog('rdApp.*')
 
@@ -240,3 +244,65 @@ def plot_quantification_hist(
     
     plt.tight_layout()
     plt.show()
+
+def tanimoto_distance_matrix(fp_list):
+    """Calculate distance matrix for fingerprint list"""
+    dissimilarity_matrix = []
+    # Notice how we are deliberately skipping the first and last items in the list
+    # because we don't need to compare them against themselves
+    for i in range(1, len(fp_list)):
+        # Compare the current fingerprint against all the previous ones in the list
+        similarities = DataStructs.BulkTanimotoSimilarity(fp_list[i], fp_list[:i])
+        # Since we need a distance matrix, calculate 1-x for every element in similarity matrix
+        dissimilarity_matrix.extend([1 - x for x in similarities])
+    return dissimilarity_matrix
+
+def cluster_fingerprints(fingerprints, cutoff=0.2):
+    """Cluster fingerprints
+    Parameters:
+        fingerprints
+        cutoff: threshold for the clustering
+    """
+    # Calculate Tanimoto distance matrix
+    distance_matrix = tanimoto_distance_matrix(fingerprints)
+    # Now cluster the data with the implemented Butina algorithm:
+    clusters = Butina.ClusterData(distance_matrix, len(fingerprints), cutoff, isDistData=True)
+    clusters = sorted(clusters, key=len, reverse=True)
+    return clusters
+
+def get_cluster_medoids(fingerprints, clusters):
+    medoids = []
+    for cluster in clusters:
+        if len(cluster) == 1:
+            medoids.append(cluster[0])
+            continue
+        # Compute average similarity to all others in the cluster
+        avg_sims = []
+        for idx in cluster:
+            sims = DataStructs.BulkTanimotoSimilarity(fingerprints[idx], [fingerprints[i] for i in cluster if i != idx])
+            avg_sims.append(np.mean(sims))
+        avg_sims = np.array(avg_sims)
+
+        # Select the index with the highest average similarity
+        medoid_idx = cluster[np.argmax(avg_sims)]
+        medoids.append(medoid_idx)
+    return np.array(medoids)
+
+def cluster_trajectory(
+    mol_array
+):
+    # https://projects.volkamerlab.org/teachopencadd/talktorials/T005_compound_clustering.html
+    # use case would be: 
+    # traj_concat = np.concatenate(trajectories)           // concatenate trajectories which most likely will be in replicates
+    # clusters, medoids = cluster_trajectory(traj_concat)  // get cluster and medoid info (in index of traj_concat) 
+    # then traj_concat[medoids] would be the representative structures that will be docked (or sth) 
+    
+    # Create fingerprints for all molecules
+    rdkit_gen = rdFingerprintGenerator.GetRDKitFPGenerator(maxPath=5)
+    fingerprints = [rdkit_gen.GetFingerprint(mol) for mol in mol_array]
+
+    # Cluster based on fingerprints
+    clusters = cluster_fingerprints(fingerprints)
+    medoids = get_cluster_medoids(fingerprints, clusters)
+
+    return clusters, medoids
