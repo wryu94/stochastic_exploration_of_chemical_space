@@ -84,7 +84,7 @@ def propagate_chemical_space_trajectory(
 
     return np.array(mol_array)
 
-def make_gif_from_trajectory(mols, outfile, fps=1):
+def mol_movie(mols, outfile, fps=6, img_size=200):
     """
     Create an animated GIF from a list of RDKit Mol objects,
     aligning each to the previous one based on their common substructure.
@@ -108,9 +108,18 @@ def make_gif_from_trajectory(mols, outfile, fps=1):
 
             if match1 and match2:
                 AllChem.AlignMol(mol, mols[i-1], atomMap=list(zip(match2, match1)))
-        
-        img = Draw.MolToImage(mol, size=(300, 300))
+
+        # Draw molecule
+        img = Draw.MolToImage(mol, size=(img_size, img_size))
+    
+        # Add index text
+        draw = ImageDraw.Draw(img)
+        draw.text((10, 10), str(i), font=ImageFont.load_default(), fill=(0, 0, 0))
+
         images.append(img)
+        
+        #img = Draw.MolToImage(mol, size=(300, 300))
+        #images.append(img)
 
     # Save as animated GIF using PIL
     images[0].save(
