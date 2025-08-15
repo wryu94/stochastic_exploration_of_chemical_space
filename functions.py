@@ -344,10 +344,13 @@ def prepare_ligand(
     lig_smiles,
     prepare_ligand_script_path
 ):
-    subprocess.run(
-    ["sh", prepare_ligand_script_path, lig_name, lig_smiles],
-    check=True
-    );
+    try:
+        subprocess.run(
+            ["sh", prepare_ligand_script_path, lig_name, lig_smiles],
+            check=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Skipping {lig_name} due to error: {e}")
 
 def prepare_receptor(
     receptor_name,
