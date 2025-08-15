@@ -302,22 +302,26 @@ def cluster_fingerprints(fingerprints, cutoff=0.2):
     clusters = sorted(clusters, key=len, reverse=True)
     return clusters
 
-def get_cluster_medoids(fingerprints, clusters):
+def get_cluster_medoids(
+    fingerprints, 
+    clusters,
+    population_threshold # Only save info for cluster with certain amount of elements innit
+):
     medoids = []
     for cluster in clusters:
-        if len(cluster) == 1:
-            medoids.append(cluster[0])
+        if len(cluster) < population_threshold:
             continue
-        # Compute average similarity to all others in the cluster
-        avg_sims = []
-        for idx in cluster:
-            sims = DataStructs.BulkTanimotoSimilarity(fingerprints[idx], [fingerprints[i] for i in cluster if i != idx])
-            avg_sims.append(np.mean(sims))
-        avg_sims = np.array(avg_sims)
-
-        # Select the index with the highest average similarity
-        medoid_idx = cluster[np.argmax(avg_sims)]
-        medoids.append(medoid_idx)
+        else:
+            # Compute average similarity to all others in the cluster
+            avg_sims = []
+            for idx in cluster:
+                sims = DataStructs.BulkTanimotoSimilarity(fingerprints[idx], [fingerprints[i] for i in cluster if i != idx])
+                avg_sims.append(np.mean(sims))
+            avg_sims = np.array(avg_sims)
+    
+            # Select the index with the highest average similarity
+            medoid_idx = cluster[np.argmax(avg_sims)]
+            medoids.append(medoid_idx)
     return np.array(medoids)
 
 def cluster_trajectory(
