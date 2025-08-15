@@ -180,8 +180,9 @@ def trajectory_quantification(
 
     return df    
 
-def plot_quantification(
-    df
+def plot_quantification_traj(
+    df,
+    show_initial_value
 ):
     fig, axs = plt.subplots(2, 3, figsize=(12, 6))  # 1 row, 3 columns
     font = 14
@@ -216,12 +217,22 @@ def plot_quantification(
     axs[1,2].tick_params(axis='both', labelsize=font)
     axs[1,2].set_xlabel('Perturbations',size=font);
     axs[1,2].legend(['SA Score'],fontsize=font-4);
+
+    if show_initial_value:
+        axs[0,0].axhline(df.iloc[0]['BertzCT'], color='red', linestyle=':')
+        axs[0,1].axhline(df.iloc[0]['HBA'], color='tab:blue', linestyle=':')
+        axs[0,1].axhline(df.iloc[0]['HBD'], color='tab:orange', linestyle=':')
+        axs[0,2].axhline(df.iloc[0]['MolWt'], color='red', linestyle=':')
+        axs[1,0].axhline(df.iloc[0]['ClogP'], color='red', linestyle=':')
+        axs[1,1].axhline(df.iloc[0]['FingerprintSim'], color='red', linestyle=':')
+        axs[1,2].axhline(df.iloc[0]['SA_Score'], color='red', linestyle=':')
     
     plt.tight_layout()
     plt.show()
 
 def plot_quantification_hist(
-    df
+    df,
+    show_initial_value
 ):
     fig, axs = plt.subplots(2, 3, figsize=(12, 6))  # 1 row, 3 columns
     font = 14
@@ -250,6 +261,15 @@ def plot_quantification_hist(
     axs[1,2].hist(df['SA_Score'],bins=20,density=True)
     axs[1,2].tick_params(axis='both', labelsize=font)
     axs[1,2].legend(['SA Score'],fontsize=font-4);
+    
+    if show_initial_value:
+        axs[0,0].axvline(df.iloc[0]['BertzCT'], color='red', linestyle=':')
+        axs[0,1].axvline(df.iloc[0]['HBA'], color='tab:blue', linestyle=':')
+        axs[0,1].axvline(df.iloc[0]['HBD'], color='tab:orange', linestyle=':')
+        axs[0,2].axvline(df.iloc[0]['MolWt'], color='red', linestyle=':')
+        axs[1,0].axvline(df.iloc[0]['ClogP'], color='red', linestyle=':')
+        axs[1,1].axvline(df.iloc[0]['FingerprintSim'], color='red', linestyle=':')
+        axs[1,2].axvline(df.iloc[0]['SA_Score'], color='red', linestyle=':')
     
     plt.tight_layout()
     plt.show()
