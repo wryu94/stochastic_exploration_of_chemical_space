@@ -23,6 +23,9 @@ from rdkit.ML.Cluster import Butina
 # Suppress RDKit warnings and errors
 RDLogger.DisableLog('rdApp.*')
 
+from vina import Vina
+import subprocess
+
 def propagate_chemical_space_trajectory(
     starting_smiles,            # smiles of the starting structure
     iteration,         # how many times to do the perturbation for, including the first structure
@@ -335,3 +338,52 @@ def cluster_trajectory(
     medoids = get_cluster_medoids(fingerprints, clusters)
 
     return clusters, medoids
+
+def prepare_ligand(
+    lig_name,
+    lig_smiles,
+    prepare_ligand_script_path
+):
+    subprocess.run(
+    ["sh", prepare_ligand_script_path, lig_name, lig_smiles],
+    check=True
+    );
+
+def prepare_receptor(
+    receptor_name,
+    receptor_pdb_path,
+    prepare_receptor_script_path
+):
+    subprocess.run(
+    ["sh", prepare_receptor_script_path, receptor_name, receptor_pdb_path],
+    check=True
+    );
+
+def vina_setup_receptor(
+    receptor_pdbqt,
+    grid_center,
+):
+# https://github.com/ccsb-scripps/AutoDock-Vina/tree/develop
+# https://github.com/janash/iqb-2024/blob/main/docking_single_ligand.ipynb
+# https://autodock-vina.readthedocs.io/en/latest/docking_python.html
+    v = Vina(sf_name='vina')
+    v.set_receptor(rigid_pdbqt_filename=receptor_pdbqt)
+    v.compute_vina_maps(center=grid_center, box_size=[20, 20, 20])
+    return v 
+
+def vina_dock_ligand(
+    v, # vina model
+    ligand_pdbqt,
+    output_folder,
+    output_name,
+    exhaustiveness=100
+):
+# https://github.com/ccsb-scripps/AutoDock-Vina/tree/develop
+# https://github.com/janash/iqb-2024/blob/main/docking_single_ligand.ipynb
+# https://autodock-vina.readthedocs.io/en/latest/docking_python.html
+    v.set_ligand_from_file(ligand_pdbqt)    
+    # Dock the ligand
+    v.dock(exhaustiveness=exhaustiveness)
+    v.optimize()
+    v.write_poses(output_folder+output_name, n_poses=5, overwrite=True)
+    return v
