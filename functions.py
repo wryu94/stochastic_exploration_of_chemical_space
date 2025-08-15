@@ -305,11 +305,11 @@ def cluster_fingerprints(fingerprints, cutoff=0.2):
 def get_cluster_medoids(
     fingerprints, 
     clusters,
-    population_threshold # Only save info for cluster with certain amount of elements innit
+    cluster_size_threshold # Only save info for cluster with certain amount of elements innit
 ):
     medoids = []
     for cluster in clusters:
-        if len(cluster) < population_threshold:
+        if len(cluster) < cluster_size_threshold:
             continue
         else:
             # Compute average similarity to all others in the cluster
