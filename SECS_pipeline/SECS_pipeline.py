@@ -490,15 +490,17 @@ def sigmoid_acceptance_criteria(
     prev_docking,
     a # Slope of sigmoid function // (lower it is, the more 'generous' it is in accepting lower docking score structures) 
 ):
-    def sigmoid(x,a):
-        return 1/(1 + np.exp(-a*x))
+    def sigmoid(x,k):
+        return 1/(1 + np.exp(-k*x))
 
     accept_or_reject = []
     for i in docking_result:
         difference = prev_docking - i['docking_score']
+        # docking_old - docking_new (essentially the signs are reversed) because lower docking score predicts stronger binding affinity
+        # So if docking_old = -5 and docking_new = -10, difference = 5, which gives the correct result 
         random = np.random.uniform()
         accept_or_reject.append(
-            sigmoid(difference,1)>random
+            sigmoid(difference,a)>random
         )
     return accept_or_reject
 
