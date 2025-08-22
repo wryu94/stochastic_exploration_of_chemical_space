@@ -485,22 +485,23 @@ def vina_prepare_and_dock_ligand_first(
 
     return v_dict
 
-def sigmoid_acceptance_criteria(
-    docking_result,
-    prev_docking,
-    a # Slope of sigmoid function // (lower it is, the more 'generous' it is in accepting lower docking score structures) 
-):
-    def sigmoid(x,k):
-        return 1/(1 + np.exp(-k*x))
+def logistic(x,k):
+    return 1/(1 + np.exp(-k*x))
 
+def logistic_acceptance_criteria(
+    docking_result,
+    docking_old,
+    a # Slope of logistic function // (lower it is, the more 'generous' it is in accepting lower docking score structures) 
+):
     accept_or_reject = []
     for i in docking_result:
-        difference = prev_docking - i['docking_score']
+        docking_new = i['docking_score'] 
+        difference = docking_old - docking_new
         # docking_old - docking_new (essentially the signs are reversed) because lower docking score predicts stronger binding affinity
         # So if docking_old = -5 and docking_new = -10, difference = 5, which gives the correct result 
         random = np.random.uniform()
         accept_or_reject.append(
-            sigmoid(difference,a)>random
+            logistic(difference,a)>random
         )
     return accept_or_reject
 
@@ -594,7 +595,7 @@ for epoch in range(1,n_epoch):
     )
 
     # Accept or reject and add the accepted structures to rows
-    accept_or_reject = sigmoid_acceptance_criteria(
+    accept_or_reject = logistic_acceptance_criteria(
         docking_result,
         prev_docking,
         0.5 
